@@ -2,7 +2,9 @@ const User = require("../model/userModel");
 const bcrypt = require("bcrypt");
 const asyncHandler = require( 'express-async-handler');
 
+
 const generateToken = require("../utils/generateToken.js");
+const verifyToken = require("../utils/verifyToken.js");
 
 //@desc Register a user
 //@route POST /api/user/register
@@ -62,16 +64,83 @@ const loginUser = asyncHandler (async (req, res) => {
 
 
 
-//@desc user info
-//@route POST /api/users/current
-//@access private
-const currentUser = (req, res) => {
-  res.json(req.user);
-};
+// @desc    Get user profile
+// @route   GET /api/users/profile
+// @access  Private
+const getUserProfile = asyncHandler(async (req, res) => {
+
+  const userToken = req.cookies.jwt;
+    if (userToken) {
+
+     // Verify the token using the utility function
+     const decoded = verifyToken(userToken, process.env.JWT_SECRET);
+     // Assuming the user ID is stored in the decoded object
+     const userId = decoded.userId;
+      // Find the user by ID
+      const user = await User.findById(userId).populate("shop");
+
+      if (user) {
+        // If the user is found, respond with their profile information
+        res.json({
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          isAdmin: user.isAdmin,
+        });
+      }
+    }else {
+    res.status(404)
+    throw new Error('User not found')
+  }
+})
+
+// @desc    Update user profile
+// @route   PUT /api/users/profile
+// @access  Private
+const updateUserProfile = asyncHandler(async (req, res) => {
+  const userToken = req.cookies.jwt;
+
+  if (userToken) {
+    // Verify the token using the utility function
+    const decoded = verifyToken(userToken, process.env.JWT_SECRET);
+
+    // Assuming the user ID is stored in the decoded object
+    const userId = decoded.userId;
+
+    // Find the user by ID
+    const user = await User.findById(userId);
+
+    if (user) {
+      // Update user profile based on request body
+      user.name = req.body.name || user.name;
+      user.email = req.body.email || user.email;
+      // Add more fields to update as needed
+
+      // Save the updated user profile
+      const updatedUser = await user.save();
+
+      // Respond with the updated profile information
+      res.json({
+        name: updatedUser.name,
+        email: updatedUser.email,
+        isAdmin: req.body.isAdmin !== undefined ? req.body.isAdmin :  updatedUser.isAdmin 
+      });
+
+    } else {
+      res.status(404);
+      throw new Error('User not found');
+    }
+  } else {
+    res.status(404);
+    throw new Error('User not found');
+  }
+});
 
 const test = (req, res) => {
   res.json("test is working");
 };
+
+
 
 // @desc    Logout user / clear cookie
 // @route   POST /api/users/logout
@@ -84,40 +153,4 @@ const logoutUser = (req, res) => {
   res.status(200).json({ message: "Logged out successfully" });
 };
 
-module.exports = { registerUser, loginUser, currentUser, logoutUser, test };
-
-// @desc Register a user
-// @route POST /api/users/register
-// @access public
-// const registerUser =  async (req,res)=>{
-//     const { username , email , password }= req.body;
-//     if( !username || !email || !password){
-//         res.status(400);
-//         throw new Error("All fields are mandatory");
-//     }
-//     const userAvailable = await User.findOne({email});
-//     if(userAvailable){
-//         res.status(400);
-//         throw new Error("User already register!");
-//     }
-
-//     //has password
-//     const hashedPassword = await bcrpyt.hash(password,10);
-//     console.log("hashed password: "+hashedPassword);
-//     const user = await User.create({
-//         username,
-//         email,
-//         password:hashedPassword,
-//     });
-
-//     console.log(`user created ${user}`);
-//     if(user){
-//         res.status(201).json({_id: user.id, email: user.email });
-//     }
-//     else{
-//         res.status(400);
-//         throw new Error("User data is not valid");
-//     }
-//     res.json({message: "register user"});
-
-// };
+module.exports = { registerUser, loginUser, getUserProfile, updateUserProfile , logoutUser, test };

@@ -1,5 +1,6 @@
-const mongoose = require( 'mongoose');
+const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const  Shop = require('../model/shopModel')
 
 const userSchema = mongoose.Schema(
   {
@@ -15,6 +16,18 @@ const userSchema = mongoose.Schema(
     password: {
       type: String,
       required: true,
+    },
+    isAdmin: {
+      type:Boolean,
+      required:true,
+      default:true,
+  },
+    shop: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'ShopProfile',
+    },
+    profilePic: {
+      type: String, // Assuming you'll store the URL or file path
     },
   },
   {
@@ -35,8 +48,27 @@ userSchema.pre('save', async function (next) {
 
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
+
+
+// If user is admin, create a ShopProfile and associate it with the user
+if (this.isAdmin && !this.shop) {
+  const shop = new Shop();
+  await shop.save();
+  this.shop = shop._id;
+  
+  console.log('ShopProfile created and associated with user');
+} else {
+  console.log('ShopProfile creation skipped');
+}
+
+next();
+
+
+
+
+
 });
 
-const User = mongoose.model('User', userSchema);
+const User = mongoose.model('UserProfile', userSchema);
 
-module.exports=  User;
+module.exports = User;

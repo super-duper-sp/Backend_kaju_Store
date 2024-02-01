@@ -26,10 +26,13 @@ app.use(cors());
 
 
 const apiRoutes = require("./routes/apiRoutes");
-app.use("/api/", apiRoutes);
+app.use("/api", apiRoutes);
 
 const authRoutes = require("./routes/authRoutes");
 app.use("/api/user", authRoutes);
+
+const shopRoutes = require("./routes/shopRoutes");
+app.use("/api/shop", shopRoutes);
 
 
 app.get('/', (req, res) => {
