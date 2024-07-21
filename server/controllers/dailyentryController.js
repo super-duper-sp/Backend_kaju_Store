@@ -7,7 +7,7 @@ const verifyToken = require("../utils/verifyToken.js");
 //@desc add DailyTransactions to database
 //@route POST /api/DailyTransactions
 //@access public
-const DailyTransactions = async (req, res) => {
+const   DailyTransactions = async (req, res) => {
 
   try {
     const userToken = req.cookies.jwt;

@@ -123,7 +123,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
       res.json({
         name: updatedUser.name,
         email: updatedUser.email,
-        isAdmin: req.body.isAdmin !== undefined ? req.body.isAdmin :  updatedUser.isAdmin 
+        
       });
 
     } else {

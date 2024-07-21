@@ -17,10 +17,11 @@ const userSchema = mongoose.Schema(
       type: String,
       required: true,
     },
-    isAdmin: {
-      type:Boolean,
+    Role: {
+      type:String,
       required:true,
-      default:true,
+      enum : ['admin', 'shopmember'],
+      default:"shopmember",
   },
     shop: {
       type: mongoose.Schema.Types.ObjectId,
@@ -62,6 +63,8 @@ if (this.isAdmin && !this.shop) {
 }
 
 next();
+
+
 
 
 
