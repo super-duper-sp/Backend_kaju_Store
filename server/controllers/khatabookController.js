@@ -13,8 +13,6 @@ const  PersonsWithDueModel = require('../model/personWithDue')
 
 const PersonsWithDue = (req, res) => {
 
-      
-       
         res.status(201).json(PersonsWithDueData);
 };
 

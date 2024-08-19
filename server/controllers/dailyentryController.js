@@ -4,45 +4,41 @@ const User = require('../model/userModel');
 const verifyToken = require("../utils/verifyToken.js");
 
 
-//@desc add DailyTransactions to database
+//@desc Add DailyTransactions to database
 //@route POST /api/DailyTransactions
 //@access public
-const   DailyTransactions = async (req, res) => {
+const DailyTransactions = async (req, res) => {
 
-  try {
-    const userToken = req.cookies.jwt;
-    if (userToken) {
-     // Verify the token using the utility function
-     const decoded = verifyToken(userToken, process.env.JWT_SECRET);
-     // Assuming the user ID is stored in the decoded object
-     const userId = decoded.userId;
+  try{
+    const user = await User.findById(req.user._id);
+  
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
 
-    const user = await User.findById(userId);
+    const shop = await Shop.findById(user.shop);
+    if (!shop) {
+      return res.status(404).json({ success: false, error: 'Shop not found' });
+    }
 
-    const shopId = await Shop.findById(user.shop);
+    const { date, buyAmount, buyNotes, sellAmount, sellNotes } = req.body;
 
-    const { date,
-      buyAmount,
-      buyNotes,
-      sellAmount,
-      sellNotes, } = req.body;
     // Create a new instance of the DailyTransactionModel with the request body data
     const newTransaction = new DailyTransactionModel({
-      user: userId,
-      shop: shopId,
+      user: user._id,
+      shop: shop._id,
       date,
       buyAmount,
       buyNotes,
       sellAmount,
       sellNotes,
     });
- 
 
+    // Save the new transaction to the database
     await newTransaction.save();
+
     res.status(201).json({ success: true, data: newTransaction });
-  } 
-}
-  catch (error) {
+  } catch (error) {
     console.error('Error adding DailyTransaction:', error);
     res.status(500).json({ success: false, error: 'Internal Server Error' });
   }
@@ -50,32 +46,88 @@ const   DailyTransactions = async (req, res) => {
 
 
 
-//@desc Get all DailyTransactions 
+
+//@desc Get all DailyTransactions with pagination
 //@route GET /api/DailyTransactions
 //@access public
-
 const DailyTransactionsAll = async (req, res) => {
   try {
-
-    const userToken = req.cookies.jwt;
-    if (userToken) {
-     // Verify the token using the utility function
-     const decoded = verifyToken(userToken, process.env.JWT_SECRET);
-     // Assuming the user ID is stored in the decoded object
-     const userId = decoded.userId;
-
-    const user = await User.findById(userId);
+    const user = await User.findById(req.user._id);
     const shopId = user.shop;
+
+    // Pagination parameters
+    const page = parseInt(req.query.page, 10) || 1; // Default to page 1 if not provided
+    const limit = parseInt(req.query.limit, 10) || 10; // Default to 10 results per page if not provided
+
+    // Filter parameters
+    const year = parseInt(req.query.year, 10);
+    const month = parseInt(req.query.month, 10);
+
     
-    const allTransactions = await DailyTransactionModel.find({ shop: shopId });
 
-    res.status(200).json(allTransactions);
+    // Ensure page and limit are positive numbers
+    if (page < 1 || limit < 1) {
+      return res.status(400).json({ success: false, error: 'Page and limit must be positive numbers' });
+    }
 
-  }} catch (error) {
+    // Calculate skip value
+    const skip = (page - 1) * limit;
+
+    // Build the query object
+    const query = { shop: shopId };
+
+    if (!isNaN(year)) {
+      query.date = { $gte: new Date(`${year}-01-01`), $lt: new Date(`${year + 1}-01-01`) };
+    }
+
+    if (!isNaN(month)) {
+      // Assuming month is a 1-based index (1 for January, 2 for February, etc.)
+      if (!isNaN(year)) {
+        query.date = {
+          ...query.date,
+          $gte: new Date(`${year}-${month.toString().padStart(2, '0')}-01`),
+          $lt: new Date(`${year}-${(month + 1).toString().padStart(2, '0')}-01`)
+        };
+      } else {
+        // If year is not provided, you might want to filter based on the current year
+        const currentYear = new Date().getFullYear();
+        query.date = {
+          $gte: new Date(`${currentYear}-${month.toString().padStart(2, '0')}-01`),
+          $lt: new Date(`${currentYear}-${(month + 1).toString().padStart(2, '0')}-01`)
+        };
+      }
+    }
+
+    // Get the total count of transactions
+    const totalTransactions = await DailyTransactionModel.countDocuments(query);
+
+    // Fetch the transactions with pagination
+    const transactions = await DailyTransactionModel.find(query)
+      .skip(skip)
+      .limit(limit)
+      .exec();
+
+    // Respond with paginated results
+    res.status(200).json({
+      success: true,
+      data: transactions,
+      pagination: {
+        total: totalTransactions,
+        page,
+        limit,
+        totalPages: Math.ceil(totalTransactions / limit),
+        hasNextPage: page * limit < totalTransactions,
+        hasPrevPage: page > 1
+      }
+    });
+
+  } catch (error) {
     console.error('Error fetching all DailyTransactions:', error);
     res.status(500).json({ success: false, error: 'Internal Server Error' });
   }
 };
+
+
 
 //@desc Edit a DailyTransaction by ID
 //@route PUT /api/DailyTransactions/:id
@@ -84,7 +136,7 @@ const editDailyTransaction = async (req, res) => {
   try {
 
     const { id } = req.params;
-
+console.log(id);
     const updateData = req.body;
 
     // Validate the update data if needed

@@ -7,42 +7,59 @@ const verifyToken = require("../utils/verifyToken.js");
 //@access public
 const postShopInfo = async (req, res) => {
   try {
-    const { name, address, contact_number,email, description } = req.body;
+    const { name, address, contact_number, email, description } = req.body;
 
-    const userToken = req.cookies.jwt;
+    // Find the user by ID (assuming user is authenticated and req.user._id is available)
+    const user = await User.findById(req.user._id);
 
-    if (userToken) {
-      // Verify the token using the utility function
-      const decoded = verifyToken(userToken, process.env.JWT_SECRET);
-  
-      // Assuming the user ID is stored in the decoded object
-      const userId = decoded.userId;
-  
-      // Find the user by ID
-      const user = await User.findById(userId);
-      const shopData = await Shop.findById(user.shop)
-  
-      if (shopData) {
-        // Update user profile based on request body
-        shopData.name = req.body.name || shopData.name;
-        shopData.email = req.body.email || shopData.email;
-        shopData.address = req.body.address || shopData.address;
-        shopData.contact_number = req.body.emcontact_numberail || shopData.contact_number;
-        shopData.description = req.body.description || shopData.description;
-        // Add more fields to update as needed
-  
-        // Save the updated user profile
-        const updatedShop = await shopData.save();
-  
-        // Respond with the updated profile information
-        res.json({
-          name :shopData.name,
-          email :shopData.email,
-          address :shopData.address,
-          contact_number :shopData.contact_number,
-          description :shopData.description
-        });
-      }
+    // Check if the user already has a shop associated
+    let shopData = await Shop.findById(user.shop);
+
+    if (shopData) {
+      // Update existing shop information
+      shopData.name = name || shopData.name;
+      shopData.email = email || shopData.email;
+      shopData.address = address || shopData.address;
+      shopData.contact_number = contact_number || shopData.contact_number;
+      shopData.description = description || shopData.description;
+
+      // Save the updated shop information
+      const updatedShop = await shopData.save();
+
+      // Respond with the updated shop information
+      return res.json({
+        name: updatedShop.name,
+        email: updatedShop.email,
+        address: updatedShop.address,
+        contact_number: updatedShop.contact_number,
+        description: updatedShop.description
+      });
+    } else {
+      // If no existing shop data, create a new shop record
+      const newShop = new Shop({
+        name,
+        email,
+        address,
+        contact_number,
+        description,
+        user: req.user._id // Assuming the Shop schema has a user reference
+      });
+
+      // Save the new shop information
+      const createdShop = await newShop.save();
+
+      // Update the user's shop reference
+      user.shop = createdShop._id;
+      await user.save();
+
+      // Respond with the created shop information
+      return res.status(201).json({
+        name: createdShop.name,
+        email: createdShop.email,
+        address: createdShop.address,
+        contact_number: createdShop.contact_number,
+        description: createdShop.description
+      });
     }
   } catch (error) {
     console.error('Error adding ShopInfo:', error);
@@ -56,20 +73,14 @@ const postShopInfo = async (req, res) => {
 //@access public
 const getShopInfo = async (req, res) => {
   try {
-    const userToken = req.cookies.jwt;
-    if (userToken) {
+    
 
-     // Verify the token using the utility function
-     const decoded = verifyToken(userToken, process.env.JWT_SECRET);
-     // Assuming the user ID is stored in the decoded object
-     const userId = decoded.userId;
-
-    const user = await User.findById(userId);
+    const user = await User.findById(req.user._id);
 
     const shopData = await Shop.findById(user.shop);
     
     res.status(200).json( shopData );
-    }
+    
   } catch (error) {
     console.error('Error getting ShopInfo:', error);
     res.status(500).json({ success: false, error: 'Internal Server Error' });
@@ -82,15 +93,9 @@ const getShopInfo = async (req, res) => {
 const updateShopInfo = async (req, res) => {
 
   try {
-    const userToken = req.cookies.jwt;
-    if (userToken) {
+    
 
-     // Verify the token using the utility function
-     const decoded = verifyToken(userToken, process.env.JWT_SECRET);
-     // Assuming the user ID is stored in the decoded object
-     const userId = decoded.userId;
-
-    const user = await User.findById(userId);
+    const user = await User.findById(req.user._id);
 
     const shop = await Shop.findById(user.shop);
    
@@ -115,7 +120,7 @@ const updateShopInfo = async (req, res) => {
       });
 
     } 
-    }
+    
   } catch (error) {
     console.error('Error getting ShopInfo:', error);
     res.status(500).json({ success: false, error: 'Internal Server Error' });

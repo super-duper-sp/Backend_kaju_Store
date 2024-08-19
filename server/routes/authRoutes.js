@@ -13,7 +13,7 @@ const { protect } =require('../middleware/check-auth')
 //     );
 
 
-const {registerUser , getUserProfile , updateUserProfile,logoutUser, loginUser , test} = require('../controllers/authController');
+const {registerUser , getUserProfile , updateUserProfile,logoutUser, loginUser } = require('../controllers/authController');
 // const validateToken = require('../middleware/validateTokenHandler');
 // router.get('/current', validateToken ,currentUser);
 
@@ -25,7 +25,7 @@ router.post('/logout', logoutUser);
 router.get("/profile",protect,getUserProfile)
 router.put("/profile",protect,updateUserProfile)
 
-router.get('/', protect ,test);
+
 
 
 

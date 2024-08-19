@@ -19,9 +19,14 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 
-// app.use(errorhandler);
-// app.use(validateTokenHandler);
-app.use(cors());
+const corsOptions = {
+  origin: ['http://localhost:3000', 'https://syncshop.vercel.app'],
+  credentials: true, // Allow credentials (cookies, etc.) to be sent
+};
+
+app.use(cors(corsOptions));
+
+
 
 
 
