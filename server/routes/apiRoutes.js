@@ -12,7 +12,7 @@ router.get('/offline-sales-yearly/:year',protect,OfflineSalesAmountYearly)
 router.get('/offline-sales-month-year/:year',protect,OfflineSalesAmountMonthlyYearly)
 
 //analysis
-router.get('/total-revenue/',protect,TotalRevenue)
+router.get('/total-revenue',protect,TotalRevenue)
 
 // Get highest monthly sales
 router.get('/highest-monthly-sales', protect,getHighestMonthlySales);

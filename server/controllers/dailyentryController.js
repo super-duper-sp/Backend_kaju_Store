@@ -8,41 +8,85 @@ const verifyToken = require("../utils/verifyToken.js");
 //@route POST /api/DailyTransactions
 //@access public
 const DailyTransactions = async (req, res) => {
-
-  try{
+  try {
+    // Fetch the user based on the request's user ID
     const user = await User.findById(req.user._id);
-  
     if (!user) {
       return res.status(404).json({ success: false, error: 'User not found' });
     }
 
+    // Fetch the shop based on the user's shop ID
     const shop = await Shop.findById(user.shop);
     if (!shop) {
       return res.status(404).json({ success: false, error: 'Shop not found' });
     }
 
+    // Ensure date is provided and correctly formatted
     const { date, buyAmount, buyNotes, sellAmount, sellNotes } = req.body;
+    if (!date) {
+      return res.status(400).json({ success: false, error: 'Date is required' });
+    }
+    console.log("aur-pehle"+date);
 
-    // Create a new instance of the DailyTransactionModel with the request body data
-    const newTransaction = new DailyTransactionModel({
-      user: user._id,
+    // Parse and normalize the date (set time to 00:00:00)
+    const transactionDate = new Date(date);
+    if (isNaN(transactionDate.getTime())) {
+      return res.status(400).json({ success: false, error: 'Invalid date format' });
+    }
+
+    console.log("pehle"+transactionDate);
+
+    // Normalize the date to just the date part (e.g., YYYY-MM-DD)
+    const normalizedDate = transactionDate.toISOString().split('T')[0];
+    console.log("bad"+normalizedDate);
+
+    // Check if a transaction already exists for the given shop and normalized date
+    const existingTransaction = await DailyTransactionModel.findOne({
       shop: shop._id,
-      date,
-      buyAmount,
-      buyNotes,
-      sellAmount,
-      sellNotes,
+      normalizedDate,
     });
 
-    // Save the new transaction to the database
-    await newTransaction.save();
+    if (existingTransaction) {
+      if (existingTransaction.user.equals(user._id)) {
+        // Allow updates if the transaction belongs to the current user
+        existingTransaction.buyAmount = buyAmount;
+        existingTransaction.buyNotes = buyNotes;
+        existingTransaction.sellAmount = sellAmount;
+        existingTransaction.sellNotes = sellNotes;
 
-    res.status(201).json({ success: true, data: newTransaction });
+        // Save the updated transaction
+        await existingTransaction.save();
+
+        return res.status(200).json({ success: true, data: existingTransaction });
+      } else {
+        // Prevent creation if a transaction with the same shop and normalized date already exists, but allow updates
+        return res.status(403).json({ success: false, error: 'Transaction for this date already exists and cannot be created by another user' });
+      }
+    } else {
+      // Create a new transaction if none exists for the given shop and normalized date
+      const newTransaction = new DailyTransactionModel({
+        user: user._id,
+        shop: shop._id,
+        date: normalizedDate, // Store the full date with time
+        normalizedDate,       // Store the normalized date (YYYY-MM-DD)
+        buyAmount,
+        buyNotes,
+        sellAmount,
+        sellNotes,
+      });
+
+      // Save the new transaction to the database
+      await newTransaction.save();
+
+      return res.status(201).json({ success: true, data: newTransaction });
+    }
   } catch (error) {
-    console.error('Error adding DailyTransaction:', error);
+    console.error('Error processing DailyTransaction:', error);
     res.status(500).json({ success: false, error: 'Internal Server Error' });
   }
 };
+
+
 
 
 
@@ -53,6 +97,7 @@ const DailyTransactions = async (req, res) => {
 const DailyTransactionsAll = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
+    
     const shopId = user.shop;
 
     // Pagination parameters
@@ -136,7 +181,7 @@ const editDailyTransaction = async (req, res) => {
   try {
 
     const { id } = req.params;
-console.log(id);
+
     const updateData = req.body;
 
     // Validate the update data if needed
@@ -168,6 +213,8 @@ console.log(id);
 const deleteDailyTransaction = async (req, res) => {
   try {
     const { id } = req.params;
+
+    console.log("okok");
 
     // Find the transaction by ID and delete it
     const deletedTransaction = await DailyTransactionModel.findByIdAndDelete(id);

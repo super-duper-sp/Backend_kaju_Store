@@ -2,7 +2,9 @@ const express = require("express");
 const dotenv = require("dotenv").config();
 const bodyParser = require("body-parser");
 const cors = require("cors");
+
 const connectDb = require("./config/dbConnection");
+
 const cookieParser = require("cookie-parser");
 
 
@@ -20,7 +22,7 @@ app.use(cookieParser());
 
 
 const corsOptions = {
-  origin: ['http://localhost:3000', 'https://syncshop.vercel.app'],
+  origin: ['http://localhost:3000', 'https://syncshop.vercel.app','https://shopsync-3zt2.onrender.com'],
   credentials: true, // Allow credentials (cookies, etc.) to be sent
 };
 

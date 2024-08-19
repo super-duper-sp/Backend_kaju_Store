@@ -1,14 +1,16 @@
-
-const  mongoose = require('mongoose')
-
+const mongoose = require('mongoose');
 
 const DailyTransactionSchema = mongoose.Schema({
   date: {
     type: Date,
     required: true,
-    unique: true,
   },
   
+  normalizedDate: {
+    type: String,
+    required: true,
+  },
+
   buyAmount: { type: Number, required: true, min: 0 },
   buyNotes: { type: String, required: true },
   sellAmount: { type: Number, required: true, min: 0 },
@@ -25,8 +27,9 @@ const DailyTransactionSchema = mongoose.Schema({
   },
 });
 
+// Compound index on user, shop, and normalizedDate to ensure uniqueness for creation
+DailyTransactionSchema.index({ shop: 1, normalizedDate: 1 }, { unique: true });
 
 const DailyTransactionModel = mongoose.model('DailyTransactions', DailyTransactionSchema);
 
-
-module.exports= DailyTransactionModel;
+module.exports = DailyTransactionModel;
