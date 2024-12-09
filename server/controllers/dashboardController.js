@@ -12,6 +12,7 @@
 const DailyTransactionModel = require("../model/dailyTransaction");
 const User = require("../model/userModel");
 const Shop = require("../model/shopModel");
+const geminiAI = require("../utils/geminiAI");
 
 const OfflineSalesAmount = async (req, res) => {
   try {
@@ -175,7 +176,25 @@ const TotalRevenue = async (req, res) => {
     // Calculate the total revenue for all available data
     const totalRevenue = calculateTotalRevenue(allTransactions);
 
-    res.status(200).json({ totalRevenue });
+    const today = new Date(); // Get today's date
+ 
+    // Format today's date
+    const formattedToday = today.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+    });
+
+    const prompt = `
+    Analyze the following data:
+   
+    - Target: ₹${10000000}
+    - Date Range: 12 January 2020 - ${formattedToday}
+    Provide a brief performance remark. in hindi only in 10 words`;
+
+    const aiComment = await geminiAI(prompt);
+
+    res.status(200).json({ totalRevenue , aiComment});
   } catch (error) {
     console.error("Error fetching or processing data:", error);
     res.status(500).json({ error: "Internal Server Error" });

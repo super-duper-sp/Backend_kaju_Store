@@ -86,13 +86,13 @@ const loginUser = asyncHandler(async (req, res) => {
 const getUserProfile = asyncHandler(async (req, res) => {
   // Find the user by ID
   const user = await User.findById(req.user._id).populate("shop");
-  const { _id, name, email,Role, isAdmin , shop } = user;
+  const { _id, name, email,role, isAdmin , shop } = user;
   
   console.log(user);
   if (user) {
     // If the user is found, respond with their profile information
     res.status(200).json({
-      _id, name, email,Role, isAdmin , shop
+      _id, name, email,role, isAdmin , shop
      
     });
   } else {

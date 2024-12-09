@@ -2,10 +2,11 @@ const express = require("express");
 const dotenv = require("dotenv").config();
 const bodyParser = require("body-parser");
 const cors = require("cors");
-
 const connectDb = require("./config/dbConnection");
-
 const cookieParser = require("cookie-parser");
+
+
+const { OpenAI } = require("openai");
 
 
 
@@ -13,7 +14,7 @@ connectDb();
 
 const app = express();
 
-const port = process.env.PORT || 3002;
+const port = process.env.PORT || 8000;
 
 // Middleware
 app.use(bodyParser.json({ extended: true }));
@@ -32,8 +33,14 @@ app.use(cors(corsOptions));
 
 
 
+
+
+
 const apiRoutes = require("./routes/apiRoutes");
 app.use("/api", apiRoutes);
+
+const aiRoutes = require("./routes/aiRoutes");
+app.use("/ai", aiRoutes);
 
 const authRoutes = require("./routes/authRoutes");
 app.use("/api/user", authRoutes);

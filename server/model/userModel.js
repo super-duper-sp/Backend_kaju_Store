@@ -18,11 +18,11 @@ const userSchema = mongoose.Schema(
       required: true,
     },
     role: {
-      type: String,
+      type: [String], // Array of strings
       required: true,
-      enum: ['admin', 'shopmember'],
-      default: 'admin',
-    },
+      enum: ['admin', 'shopmember'], // Valid roles
+      default: ['admin'], // Default role is admin
+    },    
     shop: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'ShopProfile',
