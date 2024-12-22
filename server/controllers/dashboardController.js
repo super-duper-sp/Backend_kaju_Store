@@ -186,11 +186,32 @@ const TotalRevenue = async (req, res) => {
     });
 
     const prompt = `
-    Analyze the following data:
-   
-    - Target: ₹${10000000}
-    - Date Range: 12 January 2020 - ${formattedToday}
-    Provide a brief performance remark. in hindi only in 10 words`;
+You are a financial data analyst specializing in summarizing business performance metrics in concise, actionable language. Your task is to analyze provided revenue data and generate a brief remark about the business's financial performance relative to its target.
+
+Here is the context:
+1. **Revenue Target:** ₹10,000,000.
+2. **Date Range:** 12 January 2020 to ${formattedToday}.
+3. the actual total revenue is ${totalRevenue}
+
+**Requirements for the remark:**
+- Must be **exactly 10 words**.
+- Clearly indicate whether the performance is excellent, good, average, or needs improvement.
+- Avoid technical jargon and ensure the comment is easy to understand.
+
+
+Example Remarks:
+- "Revenue exceeds expectations, keep up the great work!"
+- "Close to target, slightly behind expected performance."
+- "Significant underperformance, urgent action needed for improvement."
+
+Generate a response only when the input includes a formatted date range, and revenue data and with percentage .
+`;
+
+    
+    
+    
+    
+  
 
     const aiComment = await geminiAI(prompt);
 

@@ -6,7 +6,7 @@ const {protect} = require("../middleware/check-auth");
 router.get('/all', protect,getAll);
 
 
-router.get('/chat', protect , getAI)
+router.get('/chat' , getAI)
 
 
 module.exports = router;

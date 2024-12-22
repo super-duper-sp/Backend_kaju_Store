@@ -113,6 +113,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     // Update user profile based on request body
     user.name = req.body.name || user.name;
     user.email = req.body.email || user.email;
+    user.role = req.body.role || user.role;
 
     // Save the updated user profile
     const updatedUser = await user.save();
@@ -121,6 +122,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     res.json({
       name: updatedUser.name,
       email: updatedUser.email,
+      role: updatedUser.role
     });
   } else {
     res.status(404);

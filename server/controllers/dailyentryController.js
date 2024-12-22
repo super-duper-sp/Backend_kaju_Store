@@ -102,7 +102,7 @@ const DailyTransactionsAll = async (req, res) => {
 
     // Pagination parameters
     const page = parseInt(req.query.page, 10) || 1; // Default to page 1 if not provided
-    const limit = parseInt(req.query.limit, 10) || 10; // Default to 10 results per page if not provided
+    const limit = parseInt(req.query.limit,10) || 10; // Default to 10 results per page if not provided
 
     // Filter parameters
     const year = parseInt(req.query.year, 10);
@@ -131,14 +131,20 @@ const DailyTransactionsAll = async (req, res) => {
         query.date = {
           ...query.date,
           $gte: new Date(`${year}-${month.toString().padStart(2, '0')}-01`),
-          $lt: new Date(`${year}-${(month + 1).toString().padStart(2, '0')}-01`)
+          $lt: new Date(
+            `${month === 12 ? year + 1 : year}-${(month === 12 ? 1 : month + 1)
+              .toString()
+              .padStart(2, '0')}-01`)
         };
       } else {
-        // If year is not provided, you might want to filter based on the current year
-        const currentYear = new Date().getFullYear();
-        query.date = {
-          $gte: new Date(`${currentYear}-${month.toString().padStart(2, '0')}-01`),
-          $lt: new Date(`${currentYear}-${(month + 1).toString().padStart(2, '0')}-01`)
+      
+        query.normalizedDate = {
+         
+            $regex: `^\\d{4}-${month}-`, // Matches the specific month dynamically
+            $options: "i"
+          
+          
+          
         };
       }
     }
@@ -146,6 +152,7 @@ const DailyTransactionsAll = async (req, res) => {
     // Get the total count of transactions
     const totalTransactions = await DailyTransactionModel.countDocuments(query);
 
+    console.log("my query",query)
     // Fetch the transactions with pagination
     const transactions = await DailyTransactionModel.find(query)
       .skip(skip)
